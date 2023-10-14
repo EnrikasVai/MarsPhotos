@@ -14,10 +14,10 @@
   ~ limitations under the License.
   -->
 <resources>
-    <string name="app_name">Mars Photos</string>
-    <string name="loading_failed">Failed to load</string>
-    <string name="retry">Retry</string>
-    <string name="loading">Loading</string>
-    <string name="mars_photo">Mars photo</string>
+    <string name="app_name">Marso Nuotraukos</string>
+    <string name="loading_failed">Nepavyko</string>
+    <string name="retry">Perkrauti</string>
+    <string name="loading">Kraunama</string>
+    <string name="mars_photo">Marso Nuotraukos</string>
     <string name="author">Enrikas Vaiciulis MKDF 20/4</string>
 </resources>

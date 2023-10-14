@@ -82,7 +82,6 @@ fun MarsPhotosApp() {
         }
     }
 
-    // Show the author information dialog when isAuthorInfoVisible is true
     if (isAuthorInfoVisible) {
         AuthorInfoDialog(
             onDismiss = { setAuthorInfoVisible(false) }
