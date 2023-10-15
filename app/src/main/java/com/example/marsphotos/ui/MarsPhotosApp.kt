@@ -97,7 +97,6 @@ fun AuthorInfoDialog(onDismiss: () -> Unit) {
                 .padding(16.dp)
                 .fillMaxWidth(),
             shape = RoundedCornerShape(16.dp), // Adjust the corner radius as needed
-            //backgroundColor = Color.White
         ) {
             Column(
                 modifier = Modifier

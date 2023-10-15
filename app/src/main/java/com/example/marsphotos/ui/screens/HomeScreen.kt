@@ -64,35 +64,53 @@ import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(
-    marsUiState: MarsUiState, retryAction: () -> Unit, modifier: Modifier = Modifier
+    marsUiState: MarsUiState,
+    retryAction: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val preferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    val sharedPreferences = remember { context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
 
-    val isFirstLaunch = preferences.getBoolean("firstLaunch", true)
+    val isFirstLaunch = sharedPreferences.getBoolean("firstLaunch", true)
+    val lastLoadedPhotoUrl = remember { mutableStateOf(sharedPreferences.getString("lastLoadedPhotoUrl", "")) }
 
-    Column(
-        modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (isFirstLaunch) {
-            // It's the first time ever opening the app
-            Text("Autorius: Enrikas Vaiciulis")
-            Text("Grupe: MKDf 20 4")
-            // Update the flag to indicate that the app has been launched at least once
-            preferences.edit().putBoolean("firstLaunch", false).apply()
-        } else {
-            when (marsUiState) {
-                is MarsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
-                is MarsUiState.Success -> PhotosGridScreen(
-                    marsUiState.photos, modifier = modifier.fillMaxWidth()
-                )
-                is MarsUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
+    var displayUrl by remember { mutableStateOf(!isFirstLaunch) }
+
+    if (isFirstLaunch) {
+        // It's the first time ever opening the app
+        Text("Autorius: Enrikas Vaiciulis")
+        Text("Grupe: MKDf 20 4")
+        // Update the flag to indicate that the app has been launched at least once
+        sharedPreferences.edit().putBoolean("firstLaunch", false).apply()
+    } else {
+        if (displayUrl) {
+            // Display the last loaded photo URL
+            Text("Last Loaded Photo URL: ${lastLoadedPhotoUrl.value}")
+            // Use LaunchedEffect to hide the URL after a short delay
+            LaunchedEffect(displayUrl) {
+                delay(2000) // Adjust the duration as needed (2 seconds in this example)
+                displayUrl = false
             }
         }
     }
+
+    when (marsUiState) {
+        is MarsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
+        is MarsUiState.Success -> {
+            // Update the last loaded photo URL
+            val newPhotoUrl = marsUiState.photos.firstOrNull()?.imgSrc ?: ""
+            lastLoadedPhotoUrl.value = newPhotoUrl
+            sharedPreferences.edit().putString("lastLoadedPhotoUrl", newPhotoUrl).apply()
+            PhotosGridScreen(marsUiState.photos, modifier = modifier.fillMaxWidth())
+        }
+        is MarsUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
+    }
 }
+
+
+
+
+
 
 
 /**
