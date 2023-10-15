@@ -15,6 +15,7 @@
  */
 package com.example.marsphotos.ui.screens
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,11 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -43,25 +49,51 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.marsphotos.R
 import com.example.marsphotos.model.MarsPhoto
 import com.example.marsphotos.ui.theme.MarsPhotosTheme
+import kotlinx.coroutines.delay
+
+
 
 @Composable
 fun HomeScreen(
     marsUiState: MarsUiState, retryAction: () -> Unit, modifier: Modifier = Modifier
 ) {
-    when (marsUiState) {
-        is MarsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
-        is MarsUiState.Success -> PhotosGridScreen(
-            marsUiState.photos, modifier = modifier.fillMaxWidth()
-        )
+    val context = LocalContext.current
+    val preferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
 
-        is MarsUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
+    val isFirstLaunch = preferences.getBoolean("firstLaunch", true)
+
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (isFirstLaunch) {
+            // It's the first time ever opening the app
+            Text("Autorius: Enrikas Vaiciulis")
+            Text("Grupe: MKDf 20 4")
+            // Update the flag to indicate that the app has been launched at least once
+            preferences.edit().putBoolean("firstLaunch", false).apply()
+        } else {
+            when (marsUiState) {
+                is MarsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
+                is MarsUiState.Success -> PhotosGridScreen(
+                    marsUiState.photos, modifier = modifier.fillMaxWidth()
+                )
+                is MarsUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
+            }
+        }
     }
 }
+
 
 /**
  * The home screen displaying the loading message.
