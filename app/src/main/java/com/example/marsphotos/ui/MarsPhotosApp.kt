@@ -18,7 +18,6 @@
 
 package com.example.marsphotos.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -44,8 +43,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -96,14 +93,14 @@ fun AuthorInfoDialog(onDismiss: () -> Unit) {
             modifier = Modifier
                 .padding(16.dp)
                 .fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp), // Adjust the corner radius as needed
+            shape = RoundedCornerShape(16.dp),
         ) {
             Column(
                 modifier = Modifier
                     .padding(20.dp)
             ) {
-                Text("Autorius: Enrikas Vaiciulis")
-                Text("Grupe: MKDF 20/4")
+                Text("Autorius: Enrikas Vaičiulis")
+                Text("Grupė: MKDF 20/4")
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { onDismiss() }
@@ -132,12 +129,11 @@ fun MarsTopAppBar(
             )
         },
         actions = {
-            // Add the "Author" menu item with an onClick event handler
             IconButton(
                 onClick = { onAuthorClick() }
             ) {
                 Icon(
-                    imageVector = Icons.Default.Person, // You can replace this with an appropriate icon
+                    imageVector = Icons.Default.Person,
                     contentDescription = stringResource(R.string.author)
                 )
             }

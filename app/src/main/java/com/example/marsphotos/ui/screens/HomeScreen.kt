@@ -1,42 +1,30 @@
-/*
- * Copyright (C) 2023 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.example.marsphotos.ui.screens
 
 import android.content.Context
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,19 +35,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
-import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
 import com.example.marsphotos.R
 import com.example.marsphotos.model.MarsPhoto
 import com.example.marsphotos.ui.theme.MarsPhotosTheme
-import kotlinx.coroutines.delay
-
 
 
 @Composable
@@ -69,30 +56,82 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val sharedPreferences = remember { context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
+    val sharedPreferences =
+        remember { context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE) }
 
     val isFirstLaunch = sharedPreferences.getBoolean("firstLaunch", true)
-    val lastLoadedPhotoUrl = remember { mutableStateOf(sharedPreferences.getString("lastLoadedPhotoUrl", "")) }
+    val lastLoadedPhotoUrl =
+        remember { mutableStateOf(sharedPreferences.getString("lastLoadedPhotoUrl", "")) }
+
+    val expandedImageUrl = sharedPreferences.getString("expandedImageUrl", "")
 
     var displayUrl by remember { mutableStateOf(!isFirstLaunch) }
 
     if (isFirstLaunch) {
         // It's the first time ever opening the app
-        Text("Autorius: Enrikas Vaiciulis")
-        Text("Grupe: MKDf 20 4")
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier.fillMaxWidth(0.8f),
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    //horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Autorius: Enrikas Vaičiulis", fontWeight = FontWeight.Bold)
+                    Text("Grupė: MKDf 20 4", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
         // Update the flag to indicate that the app has been launched at least once
         sharedPreferences.edit().putBoolean("firstLaunch", false).apply()
     } else {
         if (displayUrl) {
-            // Display the last loaded photo URL
-            Text("Last Loaded Photo URL: ${lastLoadedPhotoUrl.value}")
-            // Use LaunchedEffect to hide the URL after a short delay
-            LaunchedEffect(displayUrl) {
-                delay(2000) // Adjust the duration as needed (2 seconds in this example)
-                displayUrl = false
+            // Display the last loaded picture in a Dialog
+            Dialog(
+                onDismissRequest = { displayUrl = false }
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Paskutinė peržiurėta nuotrauka",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Image(
+                            painter = rememberImagePainter(data = expandedImageUrl),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp) // Adjust the height of the image
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                displayUrl = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Uždaryti")
+                        }
+                    }
+                }
             }
         }
-    }
+
 
     when (marsUiState) {
         is MarsUiState.Loading -> LoadingScreen(modifier = modifier.fillMaxSize())
@@ -103,15 +142,11 @@ fun HomeScreen(
             sharedPreferences.edit().putString("lastLoadedPhotoUrl", newPhotoUrl).apply()
             PhotosGridScreen(marsUiState.photos, modifier = modifier.fillMaxWidth())
         }
+
         is MarsUiState.Error -> ErrorScreen(retryAction, modifier = modifier.fillMaxSize())
     }
 }
-
-
-
-
-
-
+}
 
 /**
  * The home screen displaying the loading message.
@@ -151,7 +186,8 @@ fun ErrorScreen(retryAction: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun PhotosGridScreen(photos: List<MarsPhoto>, modifier: Modifier = Modifier) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(150.dp),
         modifier = modifier,
         contentPadding = PaddingValues(4.dp)
     ) {
@@ -167,11 +203,70 @@ fun PhotosGridScreen(photos: List<MarsPhoto>, modifier: Modifier = Modifier) {
     }
 }
 
+@Composable
+fun ExpandedImageDialog(
+    photo: MarsPhoto,
+    dismissAction: () -> Unit
+) {
+    val context = LocalContext.current
+    val expandedImageUrl = photo.imgSrc // URL to save
+
+    Dialog(
+        onDismissRequest = dismissAction
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp), // Adjust the height as needed
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Box(
+                contentAlignment = Alignment.Center, // Center the content
+                modifier = Modifier.fillMaxSize()
+            ) {
+                LazyColumn {
+                    item {
+                        Image(
+                            painter = rememberImagePainter(data = photo.imgSrc),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(300.dp)
+                        )
+                    }
+                    item {
+                        Button(
+                            onClick = {
+                                dismissAction()
+                                saveExpandedImageUrl(context, expandedImageUrl)
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            Text("Uždaryti")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+fun saveExpandedImageUrl(context: Context, url: String) {
+    val sharedPreferences = context.getSharedPreferences("MyPrefs", Context.MODE_PRIVATE)
+    sharedPreferences.edit().putString("expandedImageUrl", url).apply()
+}
 
 @Composable
 fun MarsPhotoCard(photo: MarsPhoto, modifier: Modifier = Modifier) {
+    val dialogState = remember { mutableStateOf(false) }
+
     Card(
-        modifier = modifier,
+        modifier = modifier.clickable { dialogState.value = true },
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -185,7 +280,14 @@ fun MarsPhotoCard(photo: MarsPhoto, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth()
         )
     }
+
+    if (dialogState.value) {
+        ExpandedImageDialog(photo) {
+            dialogState.value = false
+        }
+    }
 }
+
 
 @Preview(showBackground = true)
 @Composable
